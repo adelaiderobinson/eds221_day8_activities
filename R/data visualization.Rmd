@@ -1,0 +1,89 @@
+---
+title: "data visualization"
+author: "Adelaide Robinson"
+date: '2022-08-17'
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(here)
+library(janitor)
+library(patchwork)
+library(ggrepel)
+library(gghighlight)
+library(paletteer)
+library(ggExtra)
+library(gapminder)
+```
+
+```{r}
+space <- read_csv(here("data", "space_launches.csv"))
+```
+
+```{r}
+space |> ggplot(aes(x = launch_year, y = type)) +
+  geom_point(aes(color = agency)) +
+   geom_text_repel(aes(label = agency)) + 
+  labs(title = "Graph", x = "an amount of time", y = "a thing") + theme_dark() +
+  theme(panel.grid.major.x = element_line(color = "blue"),
+        panel.grid.minor.y = element_line(color = "green"),
+        panel.background = element_rect(color = "purple", fil = "yellow"))
+
+```
+
+```{r}
+ggsave(here("data", "mess.png"))
+```
+
+# Task 2
+
+1.  Create a summary table of total annual greenhouse gas emissions (only from Emissions_mtCO2e column) by sector_general
+
+```{r}
+san_francisco <- read_csv(here("data", "San_Francisco_Communitywide_Greenhouse_Gas_Inventory.csv"))
+
+
+```
+
+```{r}
+
+table <- san_francisco |> group_by(Sector_General) |> 
+  summarize(sum(Emissions_mtCO2e, na.rm = TRUE))
+```
+
+Create a summary table of total annual greenhouse gas emissions (only from Emissions_mtCO2e column) by year and commodity type
+
+```{r}
+table_2 <- san_francisco |> 
+  group_by(Calendar_Year, Commodity_Type) |> 
+  summarize(sum(Emissions_mtCO2e, na.rm = TRUE))
+  
+```
+
+Create a subset of the data that only contains observations from 2005 on, only for observations where `Sector_Detail2` contains the pattern "PG&E", then limit to columns `Calendar_Year`, `Sector_Detail2` and `Emissions_mtCO2e`.
+
+```{r}
+
+subset <- san_francisco |> 
+  filter(Calendar_Year > 2005, str_detect(Sector_Detail2, pattern = "PG&E"))
+ 
+
+```
+
+```{r}
+
+graph <- san_francisco |> 
+  group_by(Calendar_Year, Sector_General) |> 
+  summarize(total_emissions = sum(Emissions_mtCO2e, na.rm = TRUE))
+
+graph |> ggplot(aes(x = Calendar_Year, y = total_emissions)) + geom_line(aes(color = Sector_General)) +
+   labs(x = "Year",
+       y = "Total Emissions (mtC02e)",
+       title = "Total Emissions by Sector") +theme_minimal() + 
+  theme(legend.position="bottom", panel.grid.major.y = element_blank(), 
+        plot.background = element_rect(fill = "white")) #make background white
++ scale_color_brewer(palette="Dark2")
+
+ggsave(here("data", "emissions.jpeg"))
+```
